@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use pycargo in your research or project, please cite it as below."
+type: software
+title: "pycargo"
+abstract: "Cargo-style project manager for Python, written in Rust. Handles project creation, virtual environments, dependency management, building, and testing."
+authors:
+  - family-names: "Dugram"
+    given-names: "N"
+    email: yap8572@gmail.com
+    orcid: ""
+repository-code: "https://github.com/ndugram/pycargo"
+url: "https://github.com/ndugram/pycargo"
+license: MIT
+version: "0.0.1"
+date-released: "2026-05-27"
+keywords:
+  - python
+  - rust
+  - cli
+  - package-manager
+  - build-tool
+  - cargo
