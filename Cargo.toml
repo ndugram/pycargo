@@ -1,0 +1,15 @@
+[package]
+name = "pycargo"
+version = "0.0.1"
+edition = "2021"
+
+[[bin]]
+name = "pycargo"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+anyhow = "1"
+colored = "2"
