@@ -1,19 +1,19 @@
 <p align="center">
-  <span style="font-size:80px">🐍📦</span>
+  <span style="font-size:80px">🐍⚡</span>
 </p>
 <h1 align="center">pycargo</h1>
 <p align="center">
-    <em>Cargo-style project manager for Python — written in Rust.</em>
+    <em>Python compiler with its own bytecode VM — written in Rust.</em>
 </p>
 <p align="center">
 <a href="https://github.com/ndugram/pycargo/actions/workflows/release.yml" target="_blank">
     <img src="https://github.com/ndugram/pycargo/actions/workflows/release.yml/badge.svg" alt="Release">
 </a>
 <a href="https://github.com/ndugram/pycargo/releases/latest" target="_blank">
-    <img src="https://img.shields.io/github/v/release/ndugram/pycargo?color=%23orange&label=version" alt="Latest release">
+    <img src="https://img.shields.io/github/v/release/ndugram/pycargo?color=%23FF6B35&label=version" alt="Latest release">
 </a>
 <a href="https://github.com/ndugram/pycargo/releases" target="_blank">
-    <img src="https://img.shields.io/github/downloads/ndugram/pycargo/total?color=%23orange" alt="Downloads">
+    <img src="https://img.shields.io/github/downloads/ndugram/pycargo/total?color=%23FF6B35" alt="Downloads">
 </a>
 <a href="https://github.com/ndugram/pycargo" target="_blank">
     <img src="https://img.shields.io/github/stars/ndugram/pycargo?style=social" alt="GitHub Stars">
@@ -26,114 +26,153 @@
 
 ---
 
-**pycargo** is a fast, Rust-powered CLI tool that brings the Cargo experience to Python projects — project creation, dependency management, virtual environments, building, running, and testing, all from one command.
+**pycargo** is a Python compiler written entirely in Rust. It compiles Python source files to custom bytecode (`.pyc`) and executes them on its own stack-based VM — no CPython, no pip, no dependencies.
+
+Pipeline: `.py` → **Lexer** → **AST** → **Compiler** → **Bytecode** → **VM**
 
 Key features:
 
-- **`pycargo new`** — scaffold a new Python project with sensible defaults.
-- **`pycargo build`** — compile Python source to `.pyc` bytecode with syntax checking.
-- **`pycargo run`** — run your project, automatically using the project's virtualenv.
-- **`pycargo test`** — run pytest with one command.
-- **`pycargo add`** — add a dependency, install it, and update `Pycargo.toml` in one step.
-- **`pycargo install`** — install all dependencies from `Pycargo.toml` into a `.venv`.
-- **`Pycargo.toml`** — single config file for package metadata and dependencies.
+- **Own bytecode format** — `.pyc` files use a custom binary format, not CPython's.
+- **Own VM** — stack-based virtual machine implemented in Rust, zero Python runtime.
+- **Smart caching** — `pycargo run` reuses existing `.pyc` if source hasn't changed.
+- **Full compiler pipeline** — lexer, recursive-descent parser, AST compiler, bytecode VM.
+- **Zero dependencies at runtime** — single binary, works anywhere.
 
 ## Installation
 
-Download the binary for your platform from the [latest release](https://github.com/ndugram/pycargo/releases/latest) and put it on your `PATH`:
+Download the binary for your platform from the [latest release](https://github.com/ndugram/pycargo/releases/latest):
 
 ```console
 # macOS / Linux
 chmod +x pycargo-*
 sudo mv pycargo-* /usr/local/bin/pycargo
 
-# Verify
 pycargo --version
 ```
 
-Or build from source (requires Rust):
+Build from source (requires Rust):
 
 ```console
 cargo install --git https://github.com/ndugram/pycargo
 ```
 
-## Quick Start
+## Usage
 
 ```console
-# Create a new project
-pycargo new my_app
-cd my_app
+# Compile .py → .pyc bytecode
+pycargo build hello.py
+#   Compiling hello.py ... done
+#    Written hello.pyc (42 instructions, 0.00s)
 
-# Build (compiles .py → .pyc, checks syntax)
-pycargo build
-
-# Run
-pycargo run
-
-# Run with arguments
-pycargo run -- --debug --verbose
-
-# Add a dependency (installs it + updates Pycargo.toml)
-pycargo add requests
-pycargo add pytest --dev
-
-# Install all dependencies from Pycargo.toml
-pycargo install
-pycargo install --dev
-
-# Run tests
-pycargo test
-pycargo test -- -v -k "test_auth"
+# Run (compiles if needed, reuses .pyc if up to date)
+pycargo run hello.py
 ```
 
-## Pycargo.toml
+## Supported Python Subset
 
-```toml
-[package]
-name = "my_app"
-version = "0.1.0"
-python = "3"
-main = "src/main.py"
-description = "My Python application"
+```python
+# Variables & arithmetic
+x = 10
+y = 3.14
+result = x ** 2 + y
 
-[dependencies]
-requests = "2.32.3"
-pydantic = "2.7.0"
+# Strings
+greeting = "Hello, " + "world!"
+print(greeting)
 
-[dev-dependencies]
-pytest = "*"
+# if / elif / else
+if x > 5:
+    print("big")
+elif x == 5:
+    print("five")
+else:
+    print("small")
+
+# while + break / continue
+i = 0
+while i < 10:
+    if i == 5:
+        break
+    i += 1
+
+# for + range
+for n in range(1, 6):
+    print(n)
+
+# Functions & recursion
+def factorial(n):
+    if n <= 1:
+        return 1
+    return n * factorial(n - 1)
+
+print(factorial(10))  # 3628800
+
+# Lists
+nums = [1, 2, 3, 4, 5]
+print(nums[2])        # 3
+print(len(nums))      # 5
+nums[0] = 99
+
+# Nested functions
+def make_adder(n):
+    def add(x):
+        return x + n
+    return add
 ```
 
-## Project Structure
+## Built-in Functions
 
-`pycargo new my_app` generates:
+| Function | Description |
+|---|---|
+| `print(*args)` | Print to stdout |
+| `range(stop)` / `range(start, stop[, step])` | Generate integer sequence |
+| `len(x)` | Length of string or list |
+| `int(x)` | Convert to integer |
+| `float(x)` | Convert to float |
+| `str(x)` | Convert to string |
+| `bool(x)` | Convert to boolean |
+| `abs(x)` | Absolute value |
+| `max(...)` | Maximum value |
+| `min(...)` | Minimum value |
+| `type(x)` | Return type name |
+
+## Bytecode Format
+
+`pycargo build` produces a `.pyc` file with a custom binary format:
 
 ```
-my_app/
-├── Pycargo.toml
-├── .gitignore
-├── src/
-│   └── main.py
-└── tests/
-    └── test_main.py
+[4 bytes]  magic: "PYCO"
+[4 bytes]  version: u32 (little-endian)
+[N bytes]  serialized CodeObject tree
+```
+
+Each `CodeObject` contains a constant pool, a name table, and a flat instruction list. Nested functions are stored as `Code` constants inside the parent's constant pool.
+
+## Architecture
+
+```
+src/
+  lexer.rs      — tokenizer (handles indentation, INDENT/DEDENT)
+  ast.rs        — AST node types
+  parser.rs     — recursive-descent parser
+  compiler.rs   — AST → bytecode (with loop/jump patching)
+  bytecode.rs   — Op enum, CodeObject, binary serialization
+  vm.rs         — stack-based VM + Value type + builtins
+  main.rs       — CLI (build / run)
 ```
 
 ## Commands
 
 | Command | Description |
 |---|---|
-| `pycargo new <name>` | Create a new Python project |
-| `pycargo build` | Compile source to `.pyc` bytecode |
-| `pycargo run [-- <args>]` | Run the project |
-| `pycargo test [-- <args>]` | Run tests with pytest |
-| `pycargo add <pkg> [--dev]` | Add and install a dependency |
-| `pycargo install [--dev]` | Install all dependencies |
+| `pycargo build <file.py>` | Compile to `<file.pyc>` |
+| `pycargo run <file.py>` | Compile (if needed) and run |
 
 ## Contributing
 
-Contributions are welcome! Please open an issue or pull request.
+Contributions are welcome. Open an issue or pull request.
 
-Found a security issue? Contact [yap8572@gmail.com](mailto:yap8572@gmail.com) directly.
+Security issues: contact [yap8572@gmail.com](mailto:yap8572@gmail.com) directly.
 
 ## License
 
