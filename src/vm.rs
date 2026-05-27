@@ -126,7 +126,7 @@ pub struct VM {
 impl VM {
     pub fn new() -> Self {
         let mut globals = HashMap::new();
-        for name in &["print", "range", "len", "str", "int", "float", "bool", "abs", "max", "min", "type"] {
+        for name in &["print", "input", "range", "len", "str", "int", "float", "bool", "abs", "max", "min", "type"] {
             globals.insert(name.to_string(), Value::Builtin(name));
         }
         VM { globals }
@@ -366,6 +366,17 @@ impl VM {
                 let parts: Vec<String> = args.iter().map(|v| v.display()).collect();
                 println!("{}", parts.join(" "));
                 Ok(Value::None)
+            }
+            "input" => {
+                use std::io::{self, Write};
+                if let Some(prompt) = args.first() {
+                    print!("{}", prompt.display());
+                    io::stdout().flush().ok();
+                }
+                let mut line = String::new();
+                io::stdin().read_line(&mut line)
+                    .map_err(|e| PyError::runtime(format!("input() failed: {}", e)))?;
+                Ok(Value::Str(line.trim_end_matches('\n').trim_end_matches('\r').to_string()))
             }
             "range" => {
                 let (start, stop, step) = match args.len() {

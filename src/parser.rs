@@ -154,13 +154,48 @@ impl Parser {
         self.expect(&Tok::LParen)?;
         let mut args = Vec::new();
         while !matches!(self.peek(), Tok::RParen | Tok::Eof) {
+            // '*' separator for keyword-only args — skip
+            if matches!(self.peek(), Tok::Star) {
+                self.advance();
+                if matches!(self.peek(), Tok::Comma) { self.advance(); }
+                continue;
+            }
+            // '**kwargs' — skip
+            if matches!(self.peek(), Tok::DStar) {
+                self.advance();
+                self.advance(); // skip name
+                if matches!(self.peek(), Tok::Comma) { self.advance(); }
+                continue;
+            }
             match self.advance().clone() {
-                Tok::Name(n) => args.push(n),
+                Tok::Name(n) => {
+                    // skip type annotation: name: Type
+                    if matches!(self.peek(), Tok::Colon) {
+                        self.advance(); // ':'
+                        // consume type expression (could be Name, Name[Name], etc.)
+                        self.parse_postfix()?;
+                    }
+                    // skip default value: name = expr
+                    if matches!(self.peek(), Tok::Assign) {
+                        self.advance();
+                        self.parse_or()?;
+                    }
+                    args.push(n);
+                }
                 t => return Err(PyError::syntax(format!("expected arg name, got {:?}", t), line)),
             }
             if matches!(self.peek(), Tok::Comma) { self.advance(); }
         }
         self.expect(&Tok::RParen)?;
+        // skip return type annotation: -> Type
+        if matches!(self.peek(), Tok::Minus) {
+            // check it's '->'
+            if self.tokens.get(self.pos + 1).map(|(t,_)| matches!(t, Tok::Gt)).unwrap_or(false) {
+                self.advance(); // '-'
+                self.advance(); // '>'
+                self.parse_postfix()?; // type
+            }
+        }
         let body = self.parse_block()?;
         Ok(Stmt::FuncDef(name, args, body))
     }
@@ -355,7 +390,17 @@ impl Parser {
                     self.advance();
                     let mut args = Vec::new();
                     while !matches!(self.peek(), Tok::RParen | Tok::Eof) {
-                        args.push(self.parse_or()?);
+                        // keyword arg: name=expr → just use expr
+                        let val = if matches!(self.peek(), Tok::Name(_))
+                            && self.tokens.get(self.pos + 1).map(|(t,_)| matches!(t, Tok::Assign)).unwrap_or(false)
+                        {
+                            self.advance(); // name
+                            self.advance(); // '='
+                            self.parse_or()?
+                        } else {
+                            self.parse_or()?
+                        };
+                        args.push(val);
                         if matches!(self.peek(), Tok::Comma) { self.advance(); }
                     }
                     self.expect(&Tok::RParen)?;
