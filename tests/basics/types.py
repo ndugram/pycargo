@@ -1,0 +1,27 @@
+print(type(42))
+print(type(3.14))
+print(type("hello"))
+print(type(True))
+print(type(None))
+print(type([1, 2, 3]))
+
+print(int(3.9))
+print(int("42"))
+print(int(True))
+print(int(False))
+
+print(float(3))
+print(float("3.14"))
+print(float(True))
+
+print(str(42))
+print(str(3.14))
+print(str(True))
+print(str(None))
+
+print(bool(0))
+print(bool(1))
+print(bool(""))
+print(bool("x"))
+print(bool(None))
+print(bool(42))
